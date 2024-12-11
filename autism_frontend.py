@@ -1,5 +1,11 @@
 import streamlit as st
 from PIL import Image
+import tensorflow as tf
+import numpy as np
+
+# Load the pre-trained model (replace 'model.h5' with your model file)
+model = tf.keras.models.load_model('D:/HAFSA Workspace/7th Semester/FYP/autism_detection_model (1).h5')
+
 
 # Customizing the app layout
 st.set_page_config(page_title="Autism Detection System", page_icon=":guardsman:", layout="centered")
@@ -67,6 +73,15 @@ age = st.sidebar.number_input("Child's Age", min_value=1, max_value=18, step=1)
 st.subheader("Upload Image for Analysis:")
 uploaded_file = st.file_uploader("Choose an image", type=["jpg", "png", "jpeg"])
 
+# Preprocess function for the image
+def preprocess_image(image):
+    # Resize and normalize the image as per the model's requirement
+    image = image.resize((224, 224))  # Example: resize to 224x224 (adjust as needed)
+    image = np.array(image)  # Convert image to numpy array
+    image = image / 255.0  # Normalize the image
+    image = np.expand_dims(image, axis=0)  # Add batch dimension
+    return image
+
 if uploaded_file is not None:
     image = Image.open(uploaded_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
@@ -74,17 +89,21 @@ if uploaded_file is not None:
 
     # Button for analysis
     if st.button("Analyze"):
-        # Simulated analysis (this should be replaced with actual AI model analysis)
         st.write("Running Analysis...")
         
-        # Example mock result (based on the age for now)
-        if age % 2 == 0:
-            result = "Autistic"
-        else:
-            result = "Non-Autistic"
+        # Preprocess the image
+        preprocessed_image = preprocess_image(image)
+
+        # Perform prediction using the model
+        prediction = model.predict(preprocessed_image)
+
+        # Example result based on predicted class (adjust this as per your model's output)
+        # Assuming the model predicts 0 for Non-Autistic and 1 for Autistic
+        result = "Autistic" if prediction[0] > 0.5 else "Non-Autistic"
         
         st.success(f"Analysis Complete! The child is likely {result}.")
-        st.info("Note: This result is based on a mock model. Please consult a medical professional for accurate diagnosis.")
+        st.info("Note: This result is based on model analysis. Please consult a medical professional for an accurate diagnosis.")
+
 else:
     st.write("Please upload an image to start the analysis.")
 
